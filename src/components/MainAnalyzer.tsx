@@ -5,7 +5,7 @@ import JobDescriptionInput from "./JobDescriptionInput";
 import SkillAnalysisResults from "./SkillAnalysisResults";
 import EnhancedAnalysis from "./EnhancedAnalysis";
 import { extractSkills, compareSkills } from "@/lib/mock-data";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 enum AnalyzerStep {
   RESUME_INPUT,
