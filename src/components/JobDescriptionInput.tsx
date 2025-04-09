@@ -64,7 +64,14 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
     setTimeout(() => {
       onSubmit(allSkills, industry);
       setLoading(false);
-    }, 1000);
+    }, 800);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddCustomSkill();
+    }
   };
 
   return (
@@ -78,11 +85,12 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
           <Select 
             value={industry} 
             onValueChange={(value) => setIndustry(value)}
+            defaultValue="Technology"
           >
             <SelectTrigger id="industry" className="w-full">
               <SelectValue placeholder="Select an industry" />
             </SelectTrigger>
-            <SelectContent position="popper" className="bg-background">
+            <SelectContent position="popper" className="bg-background z-50">
               {industries.map((ind) => (
                 <SelectItem key={ind} value={ind}>{ind}</SelectItem>
               ))}
@@ -109,7 +117,7 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
               placeholder="e.g., React, Python, Project Management"
               value={customSkill}
               onChange={(e) => setCustomSkill(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCustomSkill()}
+              onKeyDown={handleKeyDown}
             />
             <Button 
               type="button"
@@ -146,6 +154,7 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
           onClick={handleSubmit} 
           disabled={(!jobDescriptionText.trim() && customSkills.length === 0) || loading} 
           className="w-full"
+          type="button"
         >
           {loading ? "Processing..." : "Analyze Job Requirements"}
         </Button>

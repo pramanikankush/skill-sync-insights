@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, XCircle, BookOpen, Download } from "lucide-react";
 import { getResourcesForSkill } from "@/lib/mock-data";
+import { useToast } from "@/hooks/use-toast";
 
 interface SkillAnalysisResultsProps {
   matchedSkills: string[];
@@ -20,9 +21,15 @@ export default function SkillAnalysisResults({
   const matchPercentage = matchedSkills.length > 0 || missingSkills.length > 0 ? 
     Math.round((matchedSkills.length / (matchedSkills.length + missingSkills.length)) * 100) : 0;
   
+  const { toast } = useToast();
+  
   const generatePDF = () => {
     // In a real app, we would generate and download a PDF here
-    alert("PDF report would be generated and downloaded here");
+    toast({
+      title: "PDF Generation",
+      description: "PDF report would be generated and downloaded in a real app",
+      duration: 3000,
+    });
   };
   
   return (

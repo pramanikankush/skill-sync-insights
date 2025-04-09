@@ -20,7 +20,13 @@ export default function ResumeInput({ onSubmit }: ResumeInputProps) {
     setTimeout(() => {
       onSubmit(resumeText);
       setLoading(false);
-    }, 1000);
+    }, 800);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      handleSubmit();
+    }
   };
 
   return (
@@ -34,11 +40,13 @@ export default function ResumeInput({ onSubmit }: ResumeInputProps) {
           className="min-h-[200px]"
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
         <Button 
           onClick={handleSubmit} 
           disabled={!resumeText.trim() || loading} 
           className="w-full"
+          type="button"
         >
           {loading ? "Processing..." : "Analyze Resume"}
         </Button>

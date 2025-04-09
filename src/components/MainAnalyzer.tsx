@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ResumeInput from "./ResumeInput";
 import JobDescriptionInput from "./JobDescriptionInput";
 import SkillAnalysisResults from "./SkillAnalysisResults";
@@ -25,7 +25,14 @@ export default function MainAnalyzer() {
   const { toast } = useToast();
 
   const handleResumeSubmit = (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter resume content before submitting",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const extractedSkills = extractSkills(text);
     setResumeText(text);
@@ -41,7 +48,14 @@ export default function MainAnalyzer() {
   };
 
   const handleJobSkillsSubmit = (skills: string[], industry?: string) => {
-    if (!skills || skills.length === 0) return;
+    if (!skills || skills.length === 0) {
+      toast({
+        title: "Error",
+        description: "No skills detected. Please provide job information.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setJobSkills(skills);
     if (industry) {
@@ -68,6 +82,12 @@ export default function MainAnalyzer() {
     setJobSkills([]);
     setMatchedSkills([]);
     setMissingSkills([]);
+    
+    toast({
+      title: "Reset complete",
+      description: "Start a new analysis",
+      duration: 2000,
+    });
   };
 
   return (
