@@ -17,7 +17,7 @@ export default function SkillAnalysisResults({
   missingSkills,
   onReset
 }: SkillAnalysisResultsProps) {
-  const matchPercentage = matchedSkills.length > 0 ? 
+  const matchPercentage = matchedSkills.length > 0 || missingSkills.length > 0 ? 
     Math.round((matchedSkills.length / (matchedSkills.length + missingSkills.length)) * 100) : 0;
   
   const generatePDF = () => {
@@ -79,10 +79,18 @@ export default function SkillAnalysisResults({
             <Separator />
             
             <div className="flex justify-between pt-2">
-              <Button variant="outline" onClick={onReset}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onReset}
+              >
                 Start Over
               </Button>
-              <Button onClick={generatePDF} className="gap-2">
+              <Button 
+                type="button"
+                onClick={generatePDF} 
+                className="gap-2"
+              >
                 <Download className="h-4 w-4" />
                 Download Report
               </Button>

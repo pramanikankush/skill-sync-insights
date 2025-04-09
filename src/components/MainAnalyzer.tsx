@@ -25,6 +25,8 @@ export default function MainAnalyzer() {
   const { toast } = useToast();
 
   const handleResumeSubmit = (text: string) => {
+    if (!text.trim()) return;
+    
     const extractedSkills = extractSkills(text);
     setResumeText(text);
     setResumeSkills(extractedSkills);
@@ -39,6 +41,8 @@ export default function MainAnalyzer() {
   };
 
   const handleJobSkillsSubmit = (skills: string[], industry?: string) => {
+    if (!skills || skills.length === 0) return;
+    
     setJobSkills(skills);
     if (industry) {
       setIndustryType(industry);

@@ -55,6 +55,11 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
     // Combine with any custom skills
     const allSkills = [...new Set([...skills, ...customSkills])];
     
+    if (allSkills.length === 0) {
+      setLoading(false);
+      return;
+    }
+    
     // Simulate processing delay
     setTimeout(() => {
       onSubmit(allSkills, industry);
@@ -70,11 +75,14 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="industry">Select industry</Label>
-          <Select value={industry} onValueChange={setIndustry}>
-            <SelectTrigger className="w-full">
+          <Select 
+            value={industry} 
+            onValueChange={(value) => setIndustry(value)}
+          >
+            <SelectTrigger id="industry" className="w-full">
               <SelectValue placeholder="Select an industry" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="bg-background">
               {industries.map((ind) => (
                 <SelectItem key={ind} value={ind}>{ind}</SelectItem>
               ))}
@@ -104,9 +112,9 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
               onKeyDown={(e) => e.key === 'Enter' && handleAddCustomSkill()}
             />
             <Button 
+              type="button"
               variant="outline" 
               onClick={handleAddCustomSkill}
-              type="button"
             >
               Add
             </Button>
@@ -121,8 +129,10 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
                 >
                   {skill}
                   <button 
+                    type="button"
                     onClick={() => setCustomSkills(customSkills.filter(s => s !== skill))}
                     className="text-secondary-foreground opacity-70 hover:opacity-100 ml-1"
+                    aria-label={`Remove ${skill}`}
                   >
                     ×
                   </button>
