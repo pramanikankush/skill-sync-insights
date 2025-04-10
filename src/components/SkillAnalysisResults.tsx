@@ -3,20 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, BookOpen, Download } from "lucide-react";
+import { CheckCircle2, XCircle, BookOpen, Download, AlertCircle } from "lucide-react";
 import { getResourcesForSkill } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SkillAnalysisResultsProps {
   matchedSkills: string[];
   missingSkills: string[];
   onReset: () => void;
+  similarSkills?: {jobSkill: string, resumeSkill: string}[];
 }
 
 export default function SkillAnalysisResults({ 
   matchedSkills, 
   missingSkills,
-  onReset
+  onReset,
+  similarSkills = []
 }: SkillAnalysisResultsProps) {
   const matchPercentage = matchedSkills.length > 0 || missingSkills.length > 0 ? 
     Math.round((matchedSkills.length / (matchedSkills.length + missingSkills.length)) * 100) : 0;
@@ -30,6 +38,17 @@ export default function SkillAnalysisResults({
       description: "PDF report would be generated and downloaded in a real app",
       duration: 3000,
     });
+  };
+
+  // Check if a skill is in the similar skills list
+  const isSimilarSkill = (skill: string) => {
+    return similarSkills.some(item => item.jobSkill === skill);
+  };
+
+  // Get the resume skill that was similar to a job skill
+  const getSimilarResumeSkill = (jobSkill: string) => {
+    const similar = similarSkills.find(item => item.jobSkill === jobSkill);
+    return similar ? similar.resumeSkill : null;
   };
   
   return (
@@ -53,9 +72,29 @@ export default function SkillAnalysisResults({
               <div className="flex flex-wrap gap-2">
                 {matchedSkills.length > 0 ? (
                   matchedSkills.map((skill) => (
-                    <Badge key={skill} variant="outline" className="bg-green-50 dark:bg-green-900/20">
-                      {skill}
-                    </Badge>
+                    <TooltipProvider key={skill}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge 
+                            variant="outline" 
+                            className={isSimilarSkill(skill) 
+                              ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800" 
+                              : "bg-green-50 dark:bg-green-900/20"
+                            }
+                          >
+                            {skill}
+                            {isSimilarSkill(skill) && (
+                              <AlertCircle className="h-3 w-3 ml-1 text-yellow-500" />
+                            )}
+                          </Badge>
+                        </TooltipTrigger>
+                        {isSimilarSkill(skill) && (
+                          <TooltipContent>
+                            <p>Similar to your skill: {getSimilarResumeSkill(skill)}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   ))
                 ) : (
                   <p className="text-muted-foreground">No matched skills found</p>
@@ -69,6 +108,9 @@ export default function SkillAnalysisResults({
               <div className="flex items-center gap-2 mb-3">
                 <XCircle className="h-5 w-5 text-red-500" />
                 <h3 className="text-lg font-medium">Missing Skills</h3>
+                <span className="text-sm text-muted-foreground ml-2">
+                  ({missingSkills.length} skills needed for this role)
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {missingSkills.length > 0 ? (

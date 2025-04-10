@@ -162,28 +162,75 @@ export function getResourcesForSkill(skill: string) {
   return learningResources[skill as keyof typeof learningResources] || defaultResources;
 }
 
+// Improved skill extraction with better pattern matching and normalization
 export function extractSkills(text: string): string[] {
-  // This is a very simplified version of skill extraction.
-  // In a real-world application, you would use NLP or an AI model.
-  const skills: string[] = [];
-  
-  // Create a set of all skills from all job roles to check against
+  // Create a comprehensive set of skills to check against
   const allPossibleSkills = new Set<string>();
+  
+  // Add all skills from job roles with standardized casing
   jobRoles.forEach(role => {
     role.skills.forEach(skill => {
-      allPossibleSkills.add(skill.toLowerCase());
+      allPossibleSkills.add(skill);
     });
   });
   
-  // Check if any of the known skills appear in the text
+  // Add additional common tech and soft skills for better coverage
+  const additionalSkills = [
+    "Agile", "Scrum", "Kanban", "JIRA", "Confluence", "Slack", "Microsoft Office",
+    "Excel", "PowerPoint", "Word", "Google Workspace", "Figma", "Sketch", "Adobe XD",
+    "Photoshop", "Illustrator", "InDesign", "Analytics", "SEO", "Marketing",
+    "Sales", "Customer Service", "Project Management", "Team Leadership",
+    "Communication", "Time Management", "Problem Solving", "Critical Thinking",
+    "Collaboration", "Research", "Data Analysis", "Reporting", "Documentation",
+    "Technical Writing", "Public Speaking", "Negotiation", "Conflict Resolution",
+    "Budget Management", "Strategic Planning", "Risk Management", "Quality Assurance",
+    "Testing", "Debugging", "UX/UI Design", "Responsive Design", "Mobile Development"
+  ];
+  
+  additionalSkills.forEach(skill => allPossibleSkills.add(skill));
+  
+  const normalizedText = text.toLowerCase();
+  const skills: string[] = [];
+  const processedSkills = new Set<string>(); // To avoid duplicates
+  
+  // First pass: Check for exact matches
   allPossibleSkills.forEach(skill => {
-    if (text.toLowerCase().includes(skill.toLowerCase())) {
-      // Find the skill with proper capitalization
-      const properSkill = Array.from(allPossibleSkills).find(
-        s => s.toLowerCase() === skill.toLowerCase()
-      );
-      if (properSkill) {
-        skills.push(properSkill);
+    // Create word boundary regex to match whole words only
+    const skillRegex = new RegExp(`\\b${skill.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    
+    if (skillRegex.test(normalizedText)) {
+      if (!processedSkills.has(skill.toLowerCase())) {
+        skills.push(skill);
+        processedSkills.add(skill.toLowerCase());
+      }
+    }
+  });
+  
+  // Second pass: Check for partial matches in complex phrases
+  // Like "experienced in Java programming" should match "Java"
+  allPossibleSkills.forEach(skill => {
+    if (skill.length > 3) { // Only consider skills with more than 3 characters to avoid false positives
+      const partialMatches = [
+        `expertise in ${skill.toLowerCase()}`,
+        `experienced with ${skill.toLowerCase()}`,
+        `proficient in ${skill.toLowerCase()}`,
+        `knowledge of ${skill.toLowerCase()}`,
+        `skilled in ${skill.toLowerCase()}`,
+        `familiar with ${skill.toLowerCase()}`,
+        `worked with ${skill.toLowerCase()}`,
+        `${skill.toLowerCase()} development`,
+        `${skill.toLowerCase()} programming`,
+        `${skill.toLowerCase()} skills`
+      ];
+      
+      for (const pattern of partialMatches) {
+        if (normalizedText.includes(pattern)) {
+          if (!processedSkills.has(skill.toLowerCase())) {
+            skills.push(skill);
+            processedSkills.add(skill.toLowerCase());
+            break; // Found a match, no need to check other patterns
+          }
+        }
       }
     }
   });
@@ -191,24 +238,75 @@ export function extractSkills(text: string): string[] {
   return skills;
 }
 
+// Enhanced comparison function with more nuanced matching
 export function compareSkills(resumeSkills: string[], jobSkills: string[]) {
   const matched: string[] = [];
   const missing: string[] = [];
+  const similar: {jobSkill: string, resumeSkill: string}[] = []; // For tracking close matches
   
-  // Check which job skills are in the resume
-  jobSkills.forEach(skill => {
-    const foundSkill = resumeSkills.find(
-      resumeSkill => resumeSkill.toLowerCase() === skill.toLowerCase()
+  // Helper function to check if two skills are similar
+  const areSimilarSkills = (skill1: string, skill2: string): boolean => {
+    skill1 = skill1.toLowerCase();
+    skill2 = skill2.toLowerCase();
+    
+    // Direct Variations (e.g., "React" and "ReactJS")
+    if (skill1.includes(skill2) || skill2.includes(skill1)) {
+      return true;
+    }
+    
+    // Common variations
+    const variations: {[key: string]: string[]} = {
+      "javascript": ["js", "es6", "ecmascript"],
+      "typescript": ["ts"],
+      "react": ["reactjs", "react.js"],
+      "node.js": ["nodejs", "node"],
+      "angular": ["angularjs", "angular2+"],
+      "vue": ["vuejs", "vue.js"],
+      "python": ["py"],
+      "microsoft sql server": ["mssql", "sql server"],
+      "postgresql": ["postgres"],
+      "amazon web services": ["aws"],
+      "google cloud platform": ["gcp"],
+      "continuous integration/continuous deployment": ["ci/cd", "cicd"],
+      "ux/ui": ["user experience", "user interface", "ux", "ui"]
+    };
+    
+    // Check known variations
+    for (const [base, aliases] of Object.entries(variations)) {
+      if (skill1 === base || aliases.includes(skill1)) {
+        if (skill2 === base || aliases.includes(skill2)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+  
+  // First, find exact matches
+  jobSkills.forEach(jobSkill => {
+    const exactMatch = resumeSkills.find(
+      resumeSkill => resumeSkill.toLowerCase() === jobSkill.toLowerCase()
     );
     
-    if (foundSkill) {
-      matched.push(skill);
+    if (exactMatch) {
+      matched.push(jobSkill);
     } else {
-      missing.push(skill);
+      // Look for similar skills if no exact match
+      const similarSkill = resumeSkills.find(
+        resumeSkill => areSimilarSkills(resumeSkill, jobSkill)
+      );
+      
+      if (similarSkill) {
+        similar.push({jobSkill, resumeSkill: similarSkill});
+        matched.push(jobSkill); // Count it as a match, but track it as similar for potential UI feedback
+      } else {
+        missing.push(jobSkill);
+      }
     }
   });
   
-  return { matched, missing };
+  return { matched, missing, similar };
 }
 
 export function getIndustrySkills(industry: string): string[] {

@@ -20,6 +20,7 @@ export default function MainAnalyzer() {
   const [jobSkills, setJobSkills] = useState<string[]>([]);
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
+  const [similarSkills, setSimilarSkills] = useState<{jobSkill: string, resumeSkill: string}[]>([]);
   const [industryType, setIndustryType] = useState<string>("Technology");
   
   const { toast } = useToast();
@@ -78,9 +79,10 @@ export default function MainAnalyzer() {
         setIndustryType(industry);
       }
       
-      const { matched, missing } = compareSkills(resumeSkills, skills);
+      const { matched, missing, similar } = compareSkills(resumeSkills, skills);
       setMatchedSkills(matched);
       setMissingSkills(missing);
+      setSimilarSkills(similar);
       
       toast({
         title: "Analysis complete!",
@@ -105,6 +107,7 @@ export default function MainAnalyzer() {
     setJobSkills([]);
     setMatchedSkills([]);
     setMissingSkills([]);
+    setSimilarSkills([]);
     localStorage.removeItem('aiAnalysisResult');
     
     toast({
@@ -129,6 +132,7 @@ export default function MainAnalyzer() {
           <SkillAnalysisResults 
             matchedSkills={matchedSkills}
             missingSkills={missingSkills}
+            similarSkills={similarSkills}
             onReset={resetAnalyzer}
           />
           
