@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResumeInputProps {
   onSubmit: (text: string) => void;
@@ -11,15 +12,32 @@ interface ResumeInputProps {
 export default function ResumeInput({ onSubmit }: ResumeInputProps) {
   const [resumeText, setResumeText] = useState("");
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = () => {
-    if (!resumeText.trim()) return;
+    if (!resumeText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your resume content before submitting",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setLoading(true);
     // Simulate processing delay
     setTimeout(() => {
-      onSubmit(resumeText);
-      setLoading(false);
+      try {
+        onSubmit(resumeText);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "There was a problem analyzing your resume. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     }, 800);
   };
 

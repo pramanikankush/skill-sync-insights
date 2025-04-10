@@ -34,17 +34,25 @@ export default function MainAnalyzer() {
       return;
     }
     
-    const extractedSkills = extractSkills(text);
-    setResumeText(text);
-    setResumeSkills(extractedSkills);
-    
-    toast({
-      title: "Resume analyzed!",
-      description: `Found ${extractedSkills.length} skills in your resume.`,
-      duration: 3000,
-    });
-    
-    setCurrentStep(AnalyzerStep.JOB_INPUT);
+    try {
+      const extractedSkills = extractSkills(text);
+      setResumeText(text);
+      setResumeSkills(extractedSkills);
+      
+      toast({
+        title: "Resume analyzed!",
+        description: `Found ${extractedSkills.length} skills in your resume.`,
+        duration: 3000,
+      });
+      
+      setCurrentStep(AnalyzerStep.JOB_INPUT);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to analyze resume. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleJobSkillsSubmit = (skills: string[], industry?: string) => {
@@ -57,22 +65,30 @@ export default function MainAnalyzer() {
       return;
     }
     
-    setJobSkills(skills);
-    if (industry) {
-      setIndustryType(industry);
+    try {
+      setJobSkills(skills);
+      if (industry) {
+        setIndustryType(industry);
+      }
+      
+      const { matched, missing } = compareSkills(resumeSkills, skills);
+      setMatchedSkills(matched);
+      setMissingSkills(missing);
+      
+      toast({
+        title: "Analysis complete!",
+        description: `You match ${matched.length} skills out of ${skills.length} required skills.`,
+        duration: 3000,
+      });
+      
+      setCurrentStep(AnalyzerStep.RESULTS);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to analyze job skills. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    const { matched, missing } = compareSkills(resumeSkills, skills);
-    setMatchedSkills(matched);
-    setMissingSkills(missing);
-    
-    toast({
-      title: "Analysis complete!",
-      description: `You match ${matched.length} skills out of ${skills.length} required skills.`,
-      duration: 3000,
-    });
-    
-    setCurrentStep(AnalyzerStep.RESULTS);
   };
 
   const resetAnalyzer = () => {

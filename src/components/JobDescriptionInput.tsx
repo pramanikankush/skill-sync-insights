@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { extractSkills } from "@/lib/mock-data";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
   const [customSkills, setCustomSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [industry, setIndustry] = useState("Technology");
+  const { toast } = useToast();
   
   const industries = [
     "Technology",
@@ -44,8 +46,6 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
   };
 
   const handleSubmit = () => {
-    setLoading(true);
-    
     // Extract skills from job description text
     let skills: string[] = [];
     if (jobDescriptionText.trim()) {
@@ -56,14 +56,28 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
     const allSkills = [...new Set([...skills, ...customSkills])];
     
     if (allSkills.length === 0) {
-      setLoading(false);
+      toast({
+        title: "Error",
+        description: "Please enter a job description or add specific skills",
+        variant: "destructive"
+      });
       return;
     }
     
+    setLoading(true);
     // Simulate processing delay
     setTimeout(() => {
-      onSubmit(allSkills, industry);
-      setLoading(false);
+      try {
+        onSubmit(allSkills, industry);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "There was a problem analyzing the job requirements. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     }, 800);
   };
 
@@ -71,6 +85,12 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAddCustomSkill();
+    }
+  };
+
+  const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      handleSubmit();
     }
   };
 
@@ -106,6 +126,7 @@ export default function JobDescriptionInput({ onSubmit }: JobDescriptionInputPro
             className="min-h-[150px]"
             value={jobDescriptionText}
             onChange={(e) => setJobDescriptionText(e.target.value)}
+            onKeyDown={handleTextareaKeyDown}
           />
         </div>
         
