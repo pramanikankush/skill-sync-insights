@@ -24,6 +24,13 @@ export default function MainAnalyzer() {
   
   const { toast } = useToast();
 
+  // Clear AI results when resetting
+  useEffect(() => {
+    if (currentStep === AnalyzerStep.RESUME_INPUT) {
+      localStorage.removeItem('aiAnalysisResult');
+    }
+  }, [currentStep]);
+
   const handleResumeSubmit = (text: string) => {
     if (!text.trim()) {
       toast({
@@ -98,6 +105,7 @@ export default function MainAnalyzer() {
     setJobSkills([]);
     setMatchedSkills([]);
     setMissingSkills([]);
+    localStorage.removeItem('aiAnalysisResult');
     
     toast({
       title: "Reset complete",

@@ -2,8 +2,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, AlertTriangle, DollarSign, BarChart, FileText } from "lucide-react";
+import { Check, AlertTriangle, DollarSign, BarChart, FileText, Brain } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useEffect, useState } from "react";
+import { AIResponse } from "@/lib/ai-service";
+import { extractSkills, compareSkills, getIndustrySkills, getSalaryInsights, assessExperienceLevel } from "@/lib/mock-data";
 
 interface EnhancedAnalysisProps {
   resumeText: string;
@@ -12,9 +15,23 @@ interface EnhancedAnalysisProps {
 }
 
 export default function EnhancedAnalysis({ resumeText, jobSkills, industry }: EnhancedAnalysisProps) {
-  // Mock data for demonstration - in a real app, this would come from an API or analysis algorithm
-  const atsScore = calculateAtsScore(resumeText, jobSkills);
-  const formatSuggestions = getFormatSuggestions(resumeText);
+  const [aiResult, setAiResult] = useState<AIResponse | null>(null);
+  
+  // Load AI analysis results from localStorage
+  useEffect(() => {
+    const savedResult = localStorage.getItem('aiAnalysisResult');
+    if (savedResult) {
+      try {
+        setAiResult(JSON.parse(savedResult));
+      } catch (e) {
+        console.error("Error parsing AI analysis result", e);
+      }
+    }
+  }, []);
+  
+  // Fallback to mock data if AI result isn't available
+  const atsScore = aiResult?.atsScore || calculateAtsScore(resumeText, jobSkills);
+  const formatSuggestions = aiResult?.suggestions || getFormatSuggestions(resumeText);
   const salaryInsights = getSalaryInsights(jobSkills, industry);
   const industrySkills = getIndustrySkills(industry);
   const experienceLevel = assessExperienceLevel(resumeText, jobSkills);
@@ -27,6 +44,12 @@ export default function EnhancedAnalysis({ resumeText, jobSkills, industry }: En
           <CardTitle className="text-xl flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
             ATS Compatibility
+            {aiResult && (
+              <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                <Brain className="h-3 w-3 mr-1" />
+                AI Powered
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -40,7 +63,7 @@ export default function EnhancedAnalysis({ resumeText, jobSkills, industry }: En
             </div>
             
             <div className="mt-4">
-              <h4 className="text-sm font-medium mb-2">Recommendations</h4>
+              <h4 className="text-sm font-medium mb-2">AI Recommendations</h4>
               <ul className="space-y-2">
                 {formatSuggestions.map((suggestion, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm">
@@ -159,12 +182,9 @@ export default function EnhancedAnalysis({ resumeText, jobSkills, industry }: En
   );
 }
 
-// Helper functions to generate mock data
-// In a real app, these would be replaced with actual API calls or algorithms
+// Helper functions for fallback
 
 function calculateAtsScore(resumeText: string, jobSkills: string[]): number {
-  // This is a simplified mock calculation
-  // A real implementation would use NLP and more complex algorithms
   const keywordsPresent = jobSkills.filter(skill => 
     resumeText.toLowerCase().includes(skill.toLowerCase())
   ).length;
@@ -182,7 +202,7 @@ function getFormatSuggestions(resumeText: string): Array<{type: 'positive' | 'wa
     message: 'Good use of action verbs in your experience descriptions.'
   });
   
-  // Length check (simplified)
+  // Length check
   if (resumeText.length < 2000) {
     suggestions.push({
       type: 'warning',
@@ -195,7 +215,7 @@ function getFormatSuggestions(resumeText: string): Array<{type: 'positive' | 'wa
     });
   }
   
-  // Check for dates (simplified)
+  // Check for dates
   if (!resumeText.match(/\b(19|20)\d{2}\b/g)) {
     suggestions.push({
       type: 'warning',
@@ -203,7 +223,7 @@ function getFormatSuggestions(resumeText: string): Array<{type: 'positive' | 'wa
     });
   }
   
-  // Check for contact information (simplified)
+  // Check for contact information
   if (!resumeText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/)) {
     suggestions.push({
       type: 'warning',
@@ -212,102 +232,4 @@ function getFormatSuggestions(resumeText: string): Array<{type: 'positive' | 'wa
   }
   
   return suggestions;
-}
-
-function getSalaryInsights(jobSkills: string[], industry: string): {entry: number, mid: number, senior: number} {
-  // Mock salary data based on industry and number of skills
-  // In a real app, this would come from a salary database or API
-  
-  let baseSalary;
-  
-  switch (industry.toLowerCase()) {
-    case 'technology':
-      baseSalary = { entry: 65000, mid: 95000, senior: 135000 };
-      break;
-    case 'finance':
-      baseSalary = { entry: 70000, mid: 105000, senior: 150000 };
-      break;
-    case 'healthcare':
-      baseSalary = { entry: 60000, mid: 85000, senior: 120000 };
-      break;
-    case 'marketing':
-      baseSalary = { entry: 55000, mid: 80000, senior: 110000 };
-      break;
-    default:
-      baseSalary = { entry: 50000, mid: 75000, senior: 100000 };
-  }
-  
-  // Adjust based on number of in-demand skills (simplified)
-  const skillFactor = Math.min(jobSkills.length / 5, 1.5);
-  
-  return {
-    entry: Math.round(baseSalary.entry * skillFactor),
-    mid: Math.round(baseSalary.mid * skillFactor),
-    senior: Math.round(baseSalary.senior * skillFactor)
-  };
-}
-
-function getIndustrySkills(industry: string): string[] {
-  // Mock industry-specific skills
-  // In a real app, this would come from an API or database
-  
-  switch (industry.toLowerCase()) {
-    case 'technology':
-      return ['JavaScript', 'Python', 'AWS', 'React', 'Docker', 'Kubernetes', 'CI/CD'];
-    case 'finance':
-      return ['Financial Analysis', 'Excel', 'SQL', 'Risk Assessment', 'Bloomberg Terminal', 'Accounting'];
-    case 'healthcare':
-      return ['EMR Systems', 'HIPAA', 'Clinical Documentation', 'Patient Care', 'Medical Terminology'];
-    case 'marketing':
-      return ['SEO', 'Google Analytics', 'Content Strategy', 'Social Media Management', 'CRM', 'Adobe Creative Suite'];
-    default:
-      return ['Communication', 'Project Management', 'Microsoft Office', 'Problem Solving', 'Team Collaboration'];
-  }
-}
-
-function assessExperienceLevel(resumeText: string, jobSkills: string[]): {level: string, percentile: number, description: string} {
-  // This is a simplified mock assessment
-  // A real implementation would use NLP and more complex algorithms
-  
-  // Check for years of experience (simplified)
-  const yearsMatch = resumeText.match(/(\d+)[\s-]*(years?|yrs?)/gi);
-  let yearsOfExperience = 0;
-  
-  if (yearsMatch) {
-    // Extract the highest number of years mentioned
-    const years = yearsMatch.map(match => {
-      const num = parseInt(match.match(/\d+/)[0]);
-      return num;
-    });
-    yearsOfExperience = Math.max(...years);
-  }
-  
-  // Calculate skill coverage
-  const skillCoverage = jobSkills.filter(skill => 
-    resumeText.toLowerCase().includes(skill.toLowerCase())
-  ).length / jobSkills.length;
-  
-  // Combined score (simplified)
-  const combinedScore = Math.min((yearsOfExperience * 10 + skillCoverage * 50), 100);
-  
-  // Determine level
-  if (combinedScore >= 80) {
-    return {
-      level: "Senior",
-      percentile: 85,
-      description: "Your profile indicates senior-level expertise with substantial experience and a strong skill match."
-    };
-  } else if (combinedScore >= 50) {
-    return {
-      level: "Mid-Level",
-      percentile: 60,
-      description: "You have a good foundation with relevant experience and skills for mid-level positions."
-    };
-  } else {
-    return {
-      level: "Entry-Level",
-      percentile: 30,
-      description: "Your profile suggests entry-level experience. Focus on building more relevant skills."
-    };
-  }
 }
